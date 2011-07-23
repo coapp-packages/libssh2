@@ -1,0 +1,62 @@
+#product-info  {
+    product-name: "libssh2";
+    version: "1.2.8";
+    original-source-location: "http://www.libssh2.org/download/libssh2-1.2.8.tar.gz";
+    original-source-website: "http://www.libssh2.org/";
+    license: "BSD";
+    packager: "Hamish C";
+}
+
+
+x86 {
+    compiler: vc10-x86;
+     
+    uses:x86=@"..\zlib";
+    uses:x86=@"..\openssl";
+
+    targets: { 
+        "win32\Release_dll\libssh2.lib",
+        "win32\Release_dll\libssh2.dll",
+        "win32\Release_dll\libssh2.exp",
+    };
+     
+    build-command:@"
+       msbuild /p:Platform=Win32 /p:Configuration=""DLL Release"" win32\libssh2.sln
+    ";
+     
+    clean-command:@"
+        cd win32
+        attrib -S -H -R *
+        del /Q *.sdf *.suo *.user 2>NUL
+        if exist ipch rmdir /S /Q ipch 2>NUL 
+        if exist Release_dll rmdir /S /Q Release_dll 2>NUL 
+        if exist Release rmdir /S /Q Release 2>NUL 
+        cd ..
+    ";
+};
+
+x64 {
+    compiler: vc10-x64;
+
+    uses:x64=@"..\zlib";
+    uses:x64=@"..\openssl";
+
+    targets: { 
+        "win32\x64\Release_dll\libssh2.lib",
+        "win32\x64\Release_dll\libssh2.dll",
+        "win32\x64\Release_dll\libssh2.exp",        
+    };
+     
+    build-command:@"
+       msbuild /p:Platform=x64 /p:Configuration=""DLL Release"" win32\libssh2.sln
+    ";
+     
+    clean-command:@"
+        cd win32
+        attrib -S -H -R *
+        del /Q *.sdf *.suo *.user 2>NUL
+        if exist ipch rmdir /S /Q ipch 2>NUL 
+        if exist x64 rmdir /S /Q x64 2>NUL 
+        cd ..
+    ";
+};
