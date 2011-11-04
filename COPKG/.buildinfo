@@ -9,7 +9,8 @@
 
 
 x86 {
-    compiler: vc10-x86;
+    compiler: vc10;
+    platform: x86;
      
     uses:x86=@"..\zlib";
     uses:x86=@"..\openssl";
@@ -36,7 +37,8 @@ x86 {
 };
 
 x64 {
-    compiler: vc10-x64;
+    compiler: vc10;
+    platform: x64;
 
     uses:x64=@"..\zlib";
     uses:x64=@"..\openssl";
