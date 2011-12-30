@@ -1,7 +1,7 @@
 #product-info  {
     product-name: "libssh2";
-    version: "1.2.8";
-    original-source-location: "http://www.libssh2.org/download/libssh2-1.2.8.tar.gz";
+    version: "1.3.0";
+    original-source-location: "git://git.libssh2.org/libssh2.git";
     original-source-website: "http://www.libssh2.org/";
     license: "BSD";
     packager: "Hamish C";
