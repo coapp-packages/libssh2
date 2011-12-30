@@ -56,6 +56,7 @@
 #include "session.h"
 #include "channel.h"
 #include "mac.h"
+#include "misc.h"
 
 /* libssh2_default_alloc
  */
@@ -114,7 +115,7 @@ banner_receive(LIBSSH2_SESSION * session)
         /* no incoming block yet! */
         session->socket_block_directions &= ~LIBSSH2_SESSION_BLOCK_INBOUND;
 
-        ret = _libssh2_recv(session->socket_fd, &c, 1,
+        ret = LIBSSH2_RECV(session, &c, 1,
                             LIBSSH2_SOCKET_RECV_FLAGS(session));
         if (ret < 0) {
             if(session->api_block_mode || (ret != -EAGAIN))
@@ -226,7 +227,7 @@ banner_send(LIBSSH2_SESSION * session)
     /* no outgoing block yet! */
     session->socket_block_directions &= ~LIBSSH2_SESSION_BLOCK_OUTBOUND;
 
-    ret = _libssh2_send(session->socket_fd,
+    ret = LIBSSH2_SEND(session,
                         banner + session->banner_TxRx_total_send,
                         banner_len - session->banner_TxRx_total_send,
                         LIBSSH2_SOCKET_SEND_FLAGS(session));
@@ -480,6 +481,8 @@ libssh2_session_init_ex(LIBSSH2_ALLOC_FUNC((*my_alloc)),
         session->alloc = local_alloc;
         session->free = local_free;
         session->realloc = local_realloc;
+        session->send = _libssh2_send;
+        session->recv = _libssh2_recv;
         session->abstract = abstract;
         session->api_timeout = 0; /* timeout-free API by default */
         session->api_block_mode = 1; /* blocking API by default */
@@ -531,6 +534,15 @@ libssh2_session_callback_set(LIBSSH2_SESSION * session,
         session->x11 = callback;
         return oldcb;
 
+    case LIBSSH2_CALLBACK_SEND:
+        oldcb = session->send;
+        session->send = callback;
+        return oldcb;
+
+    case LIBSSH2_CALLBACK_RECV:
+        oldcb = session->recv;
+        session->recv = callback;
+        return oldcb;
     }
     _libssh2_debug(session, LIBSSH2_TRACE_TRANS, "Setting Callback %d", cbtype);
 
@@ -1573,13 +1585,13 @@ libssh2_poll(LIBSSH2_POLLFD * fds, unsigned int nfds, long timeout)
         }
 #ifdef HAVE_POLL
 
-#ifdef HAVE_GETTIMEOFDAY
+#ifdef HAVE_LIBSSH2_GETTIMEOFDAY
         {
             struct timeval tv_begin, tv_end;
 
-            gettimeofday((struct timeval *) &tv_begin, NULL);
+            _libssh2_gettimeofday((struct timeval *) &tv_begin, NULL);
             sysret = poll(sockets, nfds, timeout_remaining);
-            gettimeofday((struct timeval *) &tv_end, NULL);
+            _libssh2_gettimeofday((struct timeval *) &tv_end, NULL);
             timeout_remaining -= (tv_end.tv_sec - tv_begin.tv_sec) * 1000;
             timeout_remaining -= (tv_end.tv_usec - tv_begin.tv_usec) / 1000;
         }
@@ -1633,13 +1645,13 @@ libssh2_poll(LIBSSH2_POLLFD * fds, unsigned int nfds, long timeout)
 #elif defined(HAVE_SELECT)
         tv.tv_sec = timeout_remaining / 1000;
         tv.tv_usec = (timeout_remaining % 1000) * 1000;
-#ifdef HAVE_GETTIMEOFDAY
+#ifdef HAVE_LIBSSH2_GETTIMEOFDAY
         {
             struct timeval tv_begin, tv_end;
 
-            gettimeofday((struct timeval *) &tv_begin, NULL);
+            _libssh2_gettimeofday((struct timeval *) &tv_begin, NULL);
             sysret = select(maxfd+1, &rfds, &wfds, NULL, &tv);
-            gettimeofday((struct timeval *) &tv_end, NULL);
+            _libssh2_gettimeofday((struct timeval *) &tv_end, NULL);
 
             timeout_remaining -= (tv_end.tv_sec - tv_begin.tv_sec) * 1000;
             timeout_remaining -= (tv_end.tv_usec - tv_begin.tv_usec) / 1000;

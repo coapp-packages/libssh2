@@ -163,13 +163,31 @@ static inline int writev(int sock, struct iovec *iov, int nvecs)
     session->ssh_msg_debug((session), (always_display), (message), \
                            (message_len), (language), (language_len), \
                            &(session)->abstract)
-#define LIBSSH2_DISCONNECT(session, reason, message, message_len, language, language_len)   \
-                session->ssh_msg_disconnect((session), (reason), (message), (message_len), (language), (language_len), &(session)->abstract)
+#define LIBSSH2_DISCONNECT(session, reason, message, message_len, \
+                           language, language_len)                \
+    session->ssh_msg_disconnect((session), (reason), (message),   \
+                                (message_len), (language), (language_len), \
+                                &(session)->abstract)
 
-#define LIBSSH2_MACERROR(session, data, datalen)                    session->macerror((session), (data), (datalen), &(session)->abstract)
-#define LIBSSH2_X11_OPEN(channel, shost, sport)                     channel->session->x11(((channel)->session), (channel), (shost), (sport), (&(channel)->session->abstract))
+#define LIBSSH2_MACERROR(session, data, datalen)         \
+    session->macerror((session), (data), (datalen), &(session)->abstract)
+#define LIBSSH2_X11_OPEN(channel, shost, sport)          \
+    channel->session->x11(((channel)->session), (channel), \
+                          (shost), (sport), (&(channel)->session->abstract))
 
-#define LIBSSH2_CHANNEL_CLOSE(session, channel)                     channel->close_cb((session), &(session)->abstract, (channel), &(channel)->abstract)
+#define LIBSSH2_CHANNEL_CLOSE(session, channel)          \
+    channel->close_cb((session), &(session)->abstract, \
+                      (channel), &(channel)->abstract)
+
+#define LIBSSH2_SEND_FD(session, fd, buffer, length, flags) \
+    session->send(fd, buffer, length, flags, &session->abstract)
+#define LIBSSH2_RECV_FD(session, fd, buffer, length, flags) \
+    session->recv(fd, buffer, length, flags, &session->abstract)
+
+#define LIBSSH2_SEND(session, buffer, length, flags)  \
+    LIBSSH2_SEND_FD(session, session->socket_fd, buffer, length, flags)
+#define LIBSSH2_RECV(session, buffer, length, flags)                    \
+    LIBSSH2_RECV_FD(session, session->socket_fd, buffer, length, flags)
 
 typedef struct _LIBSSH2_KEX_METHOD LIBSSH2_KEX_METHOD;
 typedef struct _LIBSSH2_HOSTKEY_METHOD LIBSSH2_HOSTKEY_METHOD;
@@ -539,6 +557,8 @@ struct _LIBSSH2_SESSION
       LIBSSH2_DISCONNECT_FUNC((*ssh_msg_disconnect));
       LIBSSH2_MACERROR_FUNC((*macerror));
       LIBSSH2_X11_OPEN_FUNC((*x11));
+      LIBSSH2_SEND_FUNC((*send));
+      LIBSSH2_RECV_FUNC((*recv));
 
     /* Method preferences -- NULL yields "load order" */
     char *kex_prefs;
@@ -794,8 +814,10 @@ struct _LIBSSH2_SESSION
 
 /* session.flag helpers */
 #ifdef MSG_NOSIGNAL
-#define LIBSSH2_SOCKET_SEND_FLAGS(session)      (((session)->flag.sigpipe) ? 0 : MSG_NOSIGNAL)
-#define LIBSSH2_SOCKET_RECV_FLAGS(session)      (((session)->flag.sigpipe) ? 0 : MSG_NOSIGNAL)
+#define LIBSSH2_SOCKET_SEND_FLAGS(session)              \
+    (((session)->flag.sigpipe) ? 0 : MSG_NOSIGNAL)
+#define LIBSSH2_SOCKET_RECV_FLAGS(session)              \
+    (((session)->flag.sigpipe) ? 0 : MSG_NOSIGNAL)
 #else
 /* If MSG_NOSIGNAL isn't defined we're SOL on blocking SIGPIPE */
 #define LIBSSH2_SOCKET_SEND_FLAGS(session)      0
@@ -972,9 +994,9 @@ _libssh2_debug(LIBSSH2_SESSION * session, int context, const char *format, ...)
 #define SSH_OPEN_RESOURCE_SHORTAGE           4
 
 ssize_t _libssh2_recv(libssh2_socket_t socket, void *buffer,
-                      size_t length, int flags);
+                      size_t length, int flags, void **abstract);
 ssize_t _libssh2_send(libssh2_socket_t socket, const void *buffer,
-                      size_t length, int flags);
+                      size_t length, int flags, void **abstract);
 
 #define LIBSSH2_READ_TIMEOUT 60 /* generic timeout in seconds used when
                                    waiting for more data to arrive */

@@ -1098,6 +1098,7 @@ static ssize_t sftp_read(LIBSSH2_SFTP_HANDLE * handle, char *buffer,
 
         total_read += copy;
         filep->data_left -= copy;
+        filep->offset += copy;
 
         if(filep->data_left)
             return total_read;
@@ -1241,9 +1242,12 @@ static ssize_t sftp_read(LIBSSH2_SFTP_HANDLE * handle, char *buffer,
                 return _libssh2_error(session, LIBSSH2_ERROR_SFTP_PROTOCOL,
                                       "SFTP Protocol badness");
 
-            if(rc32 != chunk->len)
-                /* a short read means this is the last read in the file */
-                filep->eof = TRUE;
+            if(rc32 != chunk->len) {
+                /* a short read does not imply end of file, but we must adjust
+                   the offset_sent since it was advanced with a full
+                   chunk->len before */
+                filep->offset_sent -= (chunk->len - rc32);
+            }
 
             if(total_read + rc32 > buffer_size) {
                 /* figure out the overlap amount */
@@ -1858,8 +1862,18 @@ libssh2_sftp_fstat_ex(LIBSSH2_SFTP_HANDLE *hnd,
 LIBSSH2_API void
 libssh2_sftp_seek64(LIBSSH2_SFTP_HANDLE *handle, libssh2_uint64_t offset)
 {
-    if(handle)
+    if(handle) {
         handle->u.file.offset = handle->u.file.offset_sent = offset;
+        /* discard all pending requests and currently read data */
+        sftp_packetlist_flush(handle);
+
+        /* free the left received buffered data */
+        if (handle->u.file.data_left) {
+            LIBSSH2_FREE(handle->sftp->channel->session, handle->u.file.data);
+            handle->u.file.data_left = handle->u.file.data_len = 0;
+            handle->u.file.data = NULL;
+        }
+    }
 }
 
 /* libssh2_sftp_seek
