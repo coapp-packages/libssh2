@@ -119,37 +119,53 @@
     <OutDir>.\Debug_dll\</OutDir>
     <IntDir>.\Debug_dll\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|x64'">
     <OutDir>.\Debug_dll\</OutDir>
     <IntDir>.\Debug_dll\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|Win32'">
     <OutDir>.\Release_dll\</OutDir>
     <IntDir>.\Release_dll\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DLL Release|x64'">
     <OutDir>.\x64\Release_dll\</OutDir>
     <IntDir>.\x64\Release_dll\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LIB Debug|Win32'">
     <OutDir>.\Debug_lib\</OutDir>
     <IntDir>.\Debug_lib\</IntDir>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LIB Debug|x64'">
     <OutDir>.\Debug_lib\</OutDir>
     <IntDir>.\Debug_lib\</IntDir>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LIB Release|Win32'">
     <OutDir>.\Release_lib\</OutDir>
     <IntDir>.\Release_lib\</IntDir>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='LIB Release|x64'">
     <OutDir>.\Release_lib\</OutDir>
     <IntDir>.\Release_lib\</IntDir>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DLL Debug|Win32'">
     <ClCompile>

@@ -87,21 +87,37 @@
     <OutDir>.\Release\</OutDir>
     <IntDir>.\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>.\x64\Release\</OutDir>
     <IntDir>.\x64\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>.\Debug\</OutDir>
     <IntDir>.\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>.\Debug\</OutDir>
     <IntDir>.\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|x64'">
+    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
