@@ -1,0 +1,39 @@
+@import "version.inc" ;
+@import "libssh2.inc";
+@import "outercurve.inc" ;
+
+#define { 
+    flavor: "${flav??vc10}"; 
+    arch : "${arc??x86}";
+}
+
+package {
+    name: "libssh2-dev[${flavor}]";
+    display-name: "libssh2 developer library";
+    arch: @"${arch}";
+}
+
+metadata {
+    summary: "The libssh2 developer library";
+}
+
+files[libs] {
+    root: @"..\output\${flavor}\${arch}\release";
+    
+    include: {
+        "libssh2.lib",
+    };
+    
+    trim-path: all;
+};
+
+requires {
+    package: "libssh2-dev-common-${package-version}-any-${Package.PublicKeyToken}";
+    package: "libssh2[${flavor}]-${package-version}-${Package.Architecture}-${Package.PublicKeyToken}";
+}
+
+developer-library[libssh2[${flavor}]] {
+    libraries : {
+        libs
+    };
+}

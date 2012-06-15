@@ -84,40 +84,40 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\Release\</OutDir>
-    <IntDir>.\Release\</IntDir>
+    <OutDir>..\output\$(COMP)\x86\$(Configuration)\</OutDir>
+    <IntDir>..\output\$(COMP)\x86\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProgramData)\include\openssl;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProgramData)\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>.\x64\Release\</OutDir>
-    <IntDir>.\x64\Release\</IntDir>
+    <OutDir>..\output\$(COMP)\x64\$(Configuration)\</OutDir>
+    <IntDir>..\output\$(COMP)\x64\$(Configuration)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProgramData)\include\openssl;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProgramData)\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\Debug\</OutDir>
-    <IntDir>.\Debug\</IntDir>
+    <OutDir>..\output\$(COMP)\x86\$(Configuration)\</OutDir>
+    <IntDir>..\output\$(COMP)\x86\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProgramData)\include\openssl;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProgramData)\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>.\Debug\</OutDir>
-    <IntDir>.\Debug\</IntDir>
+    <OutDir>..\output\$(COMP)\x64\$(Configuration)\</OutDir>
+    <IntDir>..\output\$(COMP)\x64\$(Configuration)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProgramData)\include\openssl;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProgramData)\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
-    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\openssl\out32dll;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProgramData)\include\openssl;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProgramData)\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Template|x64'">
-    <IncludePath>$(SolutionDir)..\..\openssl\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)..\..\openssl\out64dll;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProgramData)\include\openssl;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProgramData)\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -149,8 +149,8 @@
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Console</SubSystem>
-      <OutputFile>Release\simple.exe</OutputFile>
-      <AdditionalLibraryDirectories>Release_dll;..\..\openssl\out32dll;..\..\zlib\Release\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <OutputFile>..\output\$(COMP)\x86\$(Configuration)\simple.exe</OutputFile>
+      <AdditionalLibraryDirectories>..\output\$(COMP)\x86\$(Configuration);$(ProgramData)\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;libeay32.lib;ssleay32.lib;ws2_32.lib;zlib.lib;libssh2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -184,8 +184,8 @@
     <Link>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Console</SubSystem>
-      <OutputFile>x64\Release\simple.exe</OutputFile>
-      <AdditionalLibraryDirectories>x64\Release_dll;..\..\openssl\out64dll;..\..\zlib\Release\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <OutputFile>..\output\$(COMP)\x64\$(Configuration)\simple.exe</OutputFile>
+      <AdditionalLibraryDirectories>..\output\$(COMP)\x64\$(Configuration);$(ProgramData)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;libeay32.lib;ssleay32.lib;ws2_32.lib;zlib.lib;libssh2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -223,8 +223,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <OutputFile>simple.exe</OutputFile>
-      <AdditionalLibraryDirectories>Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <OutputFile>..\output\$(COMP)\x86\$(Configuration)\simple.exe</OutputFile>
+      <AdditionalLibraryDirectories>..\output\$(COMP)\x86\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;libeay32.lib;ssleay32.lib;ws2_32.lib;zlib.lib;libssh2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -261,8 +261,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
-      <OutputFile>simple.exe</OutputFile>
-      <AdditionalLibraryDirectories>Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <OutputFile>..\output\$(COMP)\x64\$(Configuration)\simple.exe</OutputFile>
+      <AdditionalLibraryDirectories>..\output\$(COMP)\x64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;libeay32.lib;ssleay32.lib;ws2_32.lib;zlib.lib;libssh2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

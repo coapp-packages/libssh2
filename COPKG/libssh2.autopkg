@@ -1,0 +1,71 @@
+@import "version.inc";
+@import "libssh2.inc";
+@import "outercurve.inc";
+
+#define { 
+    flavor: "${flav??vc10}"; 
+    arch : "${arc??x86}";
+}
+
+package {
+    name: "libssh2[${flavor}]";
+    display-name: "libssh2 - SSH2 Library";
+    arch: @"${arch}";
+}
+
+metadata {
+    summary: "libssh2 - SSH2 library";
+}
+
+files[dlls] {
+    root: @"..\output\${flavor}\${arch}\release";
+  
+    include: {
+        "libssh2.dll",
+    };
+    
+    trim-path: all;
+};
+
+files[files-to-sign] {
+    include: { 
+        dlls
+    };    
+}
+
+requires {
+    package: "openssl[${flavor}]-1.0.0-${Package.Architecture}-1e373a58e25250cb";
+    package: "zlib[${flavor}]-1.2.5-${Package.Architecture}-1e373a58e25250cb";
+}
+
+manifest[things-that-need-them] {
+    assembly : {
+        "openssl[${flavor}]",
+        "zlib[${flavor}]",
+    };
+
+    include : { 
+        dlls
+    };
+}
+
+assembly[libssh2[${flavor}]] {
+    include : {
+        dlls
+    };
+}
+
+signing {
+    attributes : {
+        company="Outercurve Foundation",
+        description="${Package.PackageDetails.SummaryDescription}",
+        product-name="libssh2",
+        product-version="${package-version}",
+        file-version="${package-version}",
+    };
+    
+    replace-signature: true; 
+    include: { 
+        files-to-sign
+    };    
+}

@@ -1,0 +1,49 @@
+@import "version.inc" ;
+@import "libssh2.inc";
+@import "outercurve.inc" ;
+
+package {
+    name: "libssh2-dev-common";
+    display-name: "libssh2 Dev Library-common";
+    arch: any;
+}
+
+metadata {
+    summary: "libssh2 developer library (common)";
+}
+
+files[headers] {
+    root: "..\\include\\";
+    include: {
+        "*.h"
+    };
+    
+    trim-path:all;
+    
+    // ensures that all the header files end up in a subfolder called 'include'
+    destination-path:"include";
+}
+
+files[docs] {
+    root: "..\\docs\\";
+    include: {
+        "*"
+    };
+    
+    trim-path:all;
+    
+    // ensures that all the documentation files end up in a subfolder called 'docs'
+    destination-path:"docs";
+
+}
+
+// the 'name' of the developer library isn't terribly important...
+developer-library[libssh2] {
+    headers: { 
+        headers
+    };
+    
+    docs: {
+        docs
+    };
+}
