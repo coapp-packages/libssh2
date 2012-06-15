@@ -1,1 +1,1 @@
-#define { package-version: 1.3.0.1; } 
+#define { package-version: 1.3.0.2; } 
