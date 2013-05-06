@@ -1,6 +1,4 @@
 /*
- * $Id: sftp_write.c,v 1.11 2009/04/28 10:35:30 bagder Exp $
- *
  * Sample showing how to do SFTP write transfers.
  *
  * The sample code has default values for host name, user name, password
@@ -87,7 +85,7 @@ int main(int argc, char *argv[])
 
     local = fopen(loclfile, "rb");
     if (!local) {
-        printf("Can't local file %s\n", loclfile);
+        fprintf(stderr, "Can't open local file %s\n", loclfile);
         return -1;
     }
 
@@ -118,7 +116,7 @@ int main(int argc, char *argv[])
     /* ... start it up. This will trade welcome banners, exchange keys,
      * and setup crypto, compression, and MAC layers
      */
-    rc = libssh2_session_startup(session, sock);
+    rc = libssh2_session_handshake(session, sock);
     if(rc) {
         fprintf(stderr, "Failure establishing SSH session: %d\n", rc);
         return -1;
@@ -130,16 +128,16 @@ int main(int argc, char *argv[])
      * user, that's your call
      */
     fingerprint = libssh2_hostkey_hash(session, LIBSSH2_HOSTKEY_HASH_SHA1);
-    printf("Fingerprint: ");
+    fprintf(stderr, "Fingerprint: ");
     for(i = 0; i < 20; i++) {
-        printf("%02X ", (unsigned char)fingerprint[i]);
+        fprintf(stderr, "%02X ", (unsigned char)fingerprint[i]);
     }
-    printf("\n");
+    fprintf(stderr, "\n");
 
     if (auth_pw) {
         /* We could authenticate via password */
         if (libssh2_userauth_password(session, username, password)) {
-            printf("Authentication by password failed.\n");
+            fprintf(stderr, "Authentication by password failed.\n");
             goto shutdown;
         }
     } else {
@@ -148,7 +146,7 @@ int main(int argc, char *argv[])
                             "/home/username/.ssh/id_rsa.pub",
                             "/home/username/.ssh/id_rsa",
                             password)) {
-            printf("\tAuthentication by public key failed\n");
+            fprintf(stderr, "\tAuthentication by public key failed\n");
             goto shutdown;
         }
     }
@@ -208,7 +206,7 @@ shutdown:
 #endif
     if (local)
         fclose(local);
-    printf("all done\n");
+    fprintf(stderr, "all done\n");
 
     libssh2_exit();
 

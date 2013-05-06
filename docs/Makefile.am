@@ -1,6 +1,6 @@
 # $Id: Makefile.am,v 1.37 2009/03/26 15:41:15 bagder Exp $
 
-EXTRA_DIST = template.3
+EXTRA_DIST = template.3 BINDINGS
 
 dist_man_MANS = \
 	libssh2_agent_connect.3 \
@@ -92,6 +92,8 @@ dist_man_MANS = \
 	libssh2_scp_send64.3 \
 	libssh2_scp_send_ex.3 \
 	libssh2_session_abstract.3 \
+	libssh2_session_banner_get.3 \
+	libssh2_session_banner_set.3 \
 	libssh2_session_block_directions.3 \
 	libssh2_session_callback_set.3 \
 	libssh2_session_disconnect.3 \
@@ -110,6 +112,7 @@ dist_man_MANS = \
 	libssh2_session_set_blocking.3 \
 	libssh2_session_set_timeout.3 \
 	libssh2_session_startup.3 \
+	libssh2_session_supported_algs.3 \
 	libssh2_sftp_close.3 \
 	libssh2_sftp_close_handle.3 \
 	libssh2_sftp_closedir.3 \
@@ -117,6 +120,8 @@ dist_man_MANS = \
 	libssh2_sftp_fstat.3 \
 	libssh2_sftp_fstat_ex.3 \
 	libssh2_sftp_fstatvfs.3 \
+	libssh2_sftp_fsync.3 \
+	libssh2_sftp_get_channel.3 \
 	libssh2_sftp_init.3 \
 	libssh2_sftp_last_error.3 \
 	libssh2_sftp_lstat.3 \

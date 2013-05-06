@@ -131,24 +131,21 @@ knownhost_add(LIBSSH2_KNOWNHOSTS *hosts,
               const char *comment, size_t commentlen,
               int typemask, struct libssh2_knownhost **store)
 {
-    struct known_host *entry =
-        LIBSSH2_ALLOC(hosts->session, sizeof(struct known_host));
+    struct known_host *entry;
     size_t hostlen = strlen(host);
     int rc;
     char *ptr;
     unsigned int ptrlen;
 
-    if(!entry)
+    /* make sure we have a key type set */
+    if(!(typemask & LIBSSH2_KNOWNHOST_KEY_MASK))
+        return _libssh2_error(hosts->session, LIBSSH2_ERROR_INVAL,
+                              "No key type set");
+
+    if(!(entry = LIBSSH2_ALLOC(hosts->session, sizeof(struct known_host))))
         return _libssh2_error(hosts->session, LIBSSH2_ERROR_ALLOC,
                               "Unable to allocate memory for known host "
                               "entry");
-
-    /* make sure we have a key type set */
-    if(!(typemask & LIBSSH2_KNOWNHOST_KEY_MASK)) {
-        rc = _libssh2_error(hosts->session, LIBSSH2_ERROR_INVAL,
-                            "No key type set");
-        goto error;
-    }
 
     memset(entry, 0, sizeof(struct known_host));
 
@@ -420,7 +417,8 @@ knownhost_check(LIBSSH2_KNOWNHOSTS *hosts,
                 /* host name match, now compare the keys */
                 if(!strcmp(key, node->key)) {
                     /* they match! */
-                    *ext = knownhost_to_external(node);
+                    if (ext)
+                        *ext = knownhost_to_external(node);
                     badkey = NULL;
                     rc = LIBSSH2_KNOWNHOST_CHECK_MATCH;
                     break;
@@ -441,7 +439,8 @@ knownhost_check(LIBSSH2_KNOWNHOSTS *hosts,
 
     if(badkey) {
         /* key mismatch */
-        *ext = knownhost_to_external(badkey);
+        if (ext)
+            *ext = knownhost_to_external(badkey);
         rc = LIBSSH2_KNOWNHOST_CHECK_MISMATCH;
     }
 
@@ -911,8 +910,11 @@ libssh2_knownhost_readfile(LIBSSH2_KNOWNHOSTS *hosts,
     file = fopen(filename, "r");
     if(file) {
         while(fgets(buf, sizeof(buf), file)) {
-            if(libssh2_knownhost_readline(hosts, buf, strlen(buf), type))
+            if(libssh2_knownhost_readline(hosts, buf, strlen(buf), type)) {
+                num = _libssh2_error(hosts->session, LIBSSH2_ERROR_KNOWN_HOSTS,
+                                     "Failed to parse known hosts file");
                 break;
+            }
             num++;
         }
         fclose(file);
@@ -998,10 +1000,10 @@ knownhost_writeline(LIBSSH2_KNOWNHOSTS *hosts,
 
         if(nlen <= buflen)
             if(node->comment)
-                sprintf(buf, "|1|%s|%s%s %s %s\n", saltalloc, namealloc,
+                snprintf(buf, buflen, "|1|%s|%s%s %s %s\n", saltalloc, namealloc,
                         keytype, node->key, node->comment);
             else
-                sprintf(buf, "|1|%s|%s%s %s\n", saltalloc, namealloc,
+                snprintf(buf, buflen, "|1|%s|%s%s %s\n", saltalloc, namealloc,
                         keytype, node->key);
         else
             rc = _libssh2_error(hosts->session, LIBSSH2_ERROR_BUFFER_TOO_SMALL,
@@ -1017,10 +1019,10 @@ knownhost_writeline(LIBSSH2_KNOWNHOSTS *hosts,
         if(nlen <= buflen)
             /* these types have the plain name */
             if(node->comment)
-                sprintf(buf, "%s%s %s %s\n", node->name, keytype, node->key,
+                snprintf(buf, buflen, "%s%s %s %s\n", node->name, keytype, node->key,
                         node->comment);
             else
-                sprintf(buf, "%s%s %s\n", node->name, keytype, node->key);
+                snprintf(buf, buflen, "%s%s %s\n", node->name, keytype, node->key);
         else
             rc = _libssh2_error(hosts->session, LIBSSH2_ERROR_BUFFER_TOO_SMALL,
                                 "Known-host write buffer too small");

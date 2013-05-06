@@ -79,7 +79,12 @@ static int _raw_mode(void)
     rc = tcgetattr(fileno(stdin), &tio);
     if (rc != -1) {
         _saved_tio = tio;
-        cfmakeraw(&tio);
+        /* do the equivalent of cfmakeraw() manually, to build on Solaris */
+        tio.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL|IXON);
+        tio.c_oflag &= ~OPOST;
+        tio.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+        tio.c_cflag &= ~(CSIZE|PARENB);
+        tio.c_cflag |= CS8;
         rc = tcsetattr(fileno(stdin), TCSADRAIN, &tio);
     }
     return rc;
@@ -203,7 +208,7 @@ static int x11_send_receive(LIBSSH2_CHANNEL *channel, int sock)
 
     rc = libssh2_poll(fds, nfds, 0);
     if (rc >0) {
-        rc = libssh2_channel_read(channel, buf,sizeof(buf));
+        rc = libssh2_channel_read(channel, buf, bufsize);
         rc = write(sock, buf, rc);
     }
 
@@ -212,7 +217,7 @@ static int x11_send_receive(LIBSSH2_CHANNEL *channel, int sock)
         memset((void *)buf,0,bufsize);
 
         /* Data in sock*/
-        rc = read(sock, buf,sizeof(buf));
+        rc = read(sock, buf, bufsize);
         if (rc > 0)
             rc = libssh2_channel_write(channel,buf, rc);
         else
@@ -296,8 +301,8 @@ main (int argc, char *argv[])
         return -1;
     }
     /* Open a session */
-    session = libssh2_session_init ();
-    rc      = libssh2_session_startup (session, sock);
+    session = libssh2_session_init();
+    rc      = libssh2_session_handshake(session, sock);
     if (rc != 0) {
         fprintf(stderr, "Failed Start the SSH session\n");
         return -1;

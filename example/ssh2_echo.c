@@ -1,6 +1,4 @@
 /*
- * $Id: ssh2_exec.c,v 1.4 2009/05/07 20:30:22 bagder Exp $
- *
  * Run it like this:
  *
  * $ ./ssh2_echo 127.0.0.1 user password
@@ -140,7 +138,7 @@ int main(int argc, char *argv[])
     /* ... start it up. This will trade welcome banners, exchange keys,
      * and setup crypto, compression, and MAC layers
      */
-    while ((rc = libssh2_session_startup(session, sock)) ==
+    while ((rc = libssh2_session_handshake(session, sock)) ==
            LIBSSH2_ERROR_EAGAIN);
     if (rc) {
         fprintf(stderr, "Failure establishing SSH session: %d\n", rc);
@@ -329,7 +327,7 @@ int main(int argc, char *argv[])
         }
 
         if (exitsignal)
-            printf("\nGot signal: %s\n", exitsignal);
+            fprintf(stderr, "\nGot signal: %s\n", exitsignal);
 
         libssh2_channel_free(channel);
         channel = NULL;

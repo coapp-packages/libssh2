@@ -2,7 +2,7 @@
 AC_INIT(libssh2, [-], libssh2-devel@cool.haxx.se)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src])
-AM_CONFIG_HEADER([src/libssh2_config.h example/libssh2_config.h])
+AC_CONFIG_HEADERS([src/libssh2_config.h example/libssh2_config.h])
 AM_MAINTAINER_MODE
 
 dnl SED is needed by some of the tools
@@ -32,7 +32,7 @@ AB_INIT
 AC_CANONICAL_HOST
 case "$host" in
     *-mingw*)
-    CFLAGS="$CFLAGS -DLIBSSH2_WIN32 -DWINSOCK_VERSION=0x0200"
+    CFLAGS="$CFLAGS -DLIBSSH2_WIN32"
     LIBS="$LIBS -lws2_32"
     ;;
 	*-cygwin)
@@ -96,12 +96,16 @@ AC_ARG_WITH(libz,
 # Look for OpenSSL (default)
 if test "$use_openssl" != "no" && test "$use_libgcrypt" != "yes"; then
   AC_LIB_HAVE_LINKFLAGS([ssl], [crypto], [#include <openssl/ssl.h>])
+  LIBSREQUIRED=libssl,libcrypto
 fi
 
 # Look for libgcrypt
 if test "$ac_cv_libssl" != "yes" && test "$use_libgcrypt" != "no"; then
   AC_LIB_HAVE_LINKFLAGS([gcrypt], [], [#include <gcrypt.h>])
+  LIBS="$LIBS -lgcrypt"
 fi
+
+AC_SUBST(LIBSREQUIRED)
 
 if test "$ac_cv_libssl" != "yes" && test "$ac_cv_libgcrypt" != "yes"; then
   AC_MSG_ERROR([cannot find OpenSSL or Libgcrypt,
@@ -215,12 +219,29 @@ AC_HELP_STRING([--disable-hidden-symbols],[Leave all symbols with default visibi
        AC_MSG_RESULT(no)
 )
 
+# Build example applications?
+AC_MSG_CHECKING([whether to build example applications])
+AC_ARG_ENABLE([examples-build],
+AC_HELP_STRING([--enable-examples-build], [Build example applications (this is the default)])
+AC_HELP_STRING([--disable-examples-build], [Do not build example applications]),
+[case "$enableval" in
+  no | false)
+    build_examples='no'
+    ;;
+  *)
+    build_examples='yes'
+    ;;
+esac], [build_examples='yes'])
+AC_MSG_RESULT($build_examples)
+AM_CONDITIONAL([BUILD_EXAMPLES], [test "x$build_examples" != "xno"])
+
 # Checks for header files.
 # AC_HEADER_STDC
 AC_CHECK_HEADERS([errno.h fcntl.h stdio.h stdlib.h unistd.h sys/uio.h])
 AC_CHECK_HEADERS([sys/select.h sys/socket.h sys/ioctl.h sys/time.h])
 AC_CHECK_HEADERS([arpa/inet.h netinet/in.h])
-AC_CHECK_HEADERS([sys/un.h])
+AC_CHECK_HEADERS([sys/un.h], [have_sys_un_h=yes], [have_sys_un_h=no])
+AM_CONDITIONAL([HAVE_SYS_UN_H], test "x$have_sys_un_h" = xyes)
 
 case $host in
   *-*-cygwin* | *-*-cegcc*)
@@ -299,6 +320,7 @@ AC_MSG_NOTICE([summary of build options:
   Library types:    Shared=${enable_shared}, Static=${enable_static}
   Crypto library:   openssl: ${ac_cv_libssl:-no} (AES-CTR: ${ac_cv_func_EVP_aes_128_ctr:-N/A}) libgcrypt: ${ac_cv_libgcrypt:-no}
   Debug build:      $enable_debug
+  Build examples:   $build_examples
   Path to sshd:     $ac_cv_path_SSHD (only for self-tests)
   libz compression: $ac_cv_libz
 ])
