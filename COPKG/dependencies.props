@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+	<Linkage-zlib>$(UsesConfigurationType)</Linkage-zlib>
+	<Linkage-zlib_redist>$(UsesConfigurationType)</Linkage-zlib_redist>
+	<Linkage-openssl>$(UsesConfigurationType)</Linkage-openssl>
+	<Linkage-openssl_redist>$(UsesConfigurationType)</Linkage-openssl_redist>
+	<CallingConvention-zlib>$(CallingConvention)</CallingConvention-zlib>
+	<CallingConvention-openssl>$(CallingConvention)</CallingConvention-openssl>
+  </PropertyGroup>
+</Project>

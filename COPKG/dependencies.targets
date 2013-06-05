@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildThisFileDirectory)packages\zlib\build\native\zlib.targets" Condition="exists('$(MSBuildThisFileDirectory)packages\zlib\build\native\zlib.targets')"/>
+  <Import Project="$(MSBuildThisFileDirectory)packages\zlib.redist\build\native\zlib.redist.targets" Condition="exists('$(MSBuildThisFileDirectory)packages\zlib.redist\build\native\zlib.redist.targets')"/>
+  <Import Project="$(MSBuildThisFileDirectory)packages\openssl\build\native\openssl.targets" Condition="exists('$(MSBuildThisFileDirectory)packages\openssl\build\native\openssl.targets')"/>
+  <Import Project="$(MSBuildThisFileDirectory)packages\openssl.redist\build\native\openssl.redist.targets" Condition="exists('$(MSBuildThisFileDirectory)packages\openssl.redist\build\native\openssl.redist.targets')"/>
+</Project>

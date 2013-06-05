@@ -1,143 +1,31 @@
-@import "version.inc";
+@import default_tools;
 
-#define {
-    NewVersion : "${package-version++}";
-    ReleaseCmd : {
-        (COMP,PLAT) => @"
-            if ""${BUILT}"" neq ""true"" ptk --nologo base --PLAT=${1} --COMP=${0} || goto failed
-            REM "
-    };
-}
+default {
 
-#product-info  {
-    product-name: "libssh2";
-    version: "1.3.0";
-    original-source-location: "git://git.libssh2.org/libssh2.git";
-    original-source-website: "http://www.libssh2.org/";
-    license: "BSD";
-    packager: "Hamish C";
-}
+	("v110, v100", "Win32, x64", "Debug,Release", "Dynamic, Static, ltcg", "cdecl") => {
+		.PushEnvironment {};
+		.LoadSystemEnvironment {};
+        .SetEnvironmentFromTarget.Target = "VC_${0}_${1}";
+		.Message.Text = @"
 
-test {
-    set: {
-        COMP="${COMP??vc10}";
-        PLAT="${PLAT??x86, x64}";
-    };
 
-    uses: release;
-    
-    build-command: @"
-        REM Start tests here...
-        for %%A in (${COMP}) do (
-            for %%B in (${PLAT}) do (
-                pushd output\%%A\%%B\Release
-                simplesigner --nologo --reference-assembly=""zlib[%%A], Version=1.2.5.0, PublicKeyToken=1e373a58e25250cb, ProcessorArchitecture=%%B"" simple.exe || goto failed
-                simplesigner --nologo --reference-assembly=""openssl[%%A], Version=1.0.0.0, PublicKeyToken=1e373a58e25250cb, ProcessorArchitecture=%%B"" simple.exe || goto failed
-                simple.exe || goto failed
-                popd
-            )
-        )
-    ";
-};
-
-package {
-    set: {
-        COMP="${COMP??vc10}";
-        PLAT="${PLAT??x86, x64}";
-    };
-
-    uses: {
-        update-version,
-        release,
-    };
-    
-    targets: { 
-        (COMP,PLAT) => @"copkg\libssh2-dev[${0}]-${NewVersion}-${1}.msi",
-    };
-    
-    build-command : @"
-        REM THERE IS SOME GOOFY STUFF IN HERE TO WORK AROUND A COUPLE BUGS IN AUTOPACKAGE.
-        REM FIXES COMING SOON...
-        cd COPKG
-        autopackage libssh2-dev-common.autopkg || goto failed
-        for %%A in (${COMP}) do (
-            for %%B in (${PLAT}) do (
-                autopackage libssh2.autopkg libssh2-dev.autopkg --flav=%%A --arc=%%B
-            )
-        )
-    ";
-
-	clean-command: @"
-        del COPKG\*.msi COPKG\*.wixpdb
-        pushd output
-        rd /s /q includes
-        popd
-    ";
+        Env:        ${0}-${1}  :  ${2}  ${3}  ${4}
+        EnvExists:  $(IsEnvironmentValid)";
+        
+        .Exec {
+            Condition="$(IsEnvironmentValid)";
+            Command = @"msbuild $(MSBuildThisFileDirectory)libssh2.vcxproj /p:PlatformToolset=${0};Platform=${1};Configuration=${2};UsesConfigurationType=${3};CallingConvention=${4}";
+        };
+        
+        .PopEnvironment{};
+	};
 	
 };
 
-update-version {
-    build-command : @"
-        if ""${noversion}"" == ""true"" goto :eof
-        REM auto-increment version.inc file...
-        pushd COPKG
-        setlocal EnableDelayedExpansion
-        set VERSTRING=#define { package-version: ${NewVersion}; }
-        echo !VERSTRING! > version.inc
-        popd
-    ";
-}
-
-release {
-    set: {
-        BuildCfg="Release";
-        COMP="${COMP??vc10}";
-        PLAT="${PLAT??x86, x64}";
-    };
-    build-command: @"${ReleaseCmd??goto failed}";
+clean {
+    .RemoveDir.Directories = @"$(MSBuildThisFileDirectory).\intermediate";
 };
 
-
-base {
-    set: {
-        BuildCfg="${BuildCfg??Debug}";
-        COMP="${COMP??vc10}";
-        PLAT="${PLAT??x86}";
-    };
-    compiler: "${COMP}";
-    platform: "${PLAT}";
-
-    requires: {
-        "openssl-dev[${COMP}]-1.0.0-${PLAT}-1e373a58e25250cb",
-        "zlib-dev[${COMP}]-1.2.5-${PLAT}-1e373a58e25250cb",
-    };
-
-    targets: { 
-        "output\${COMP}\${PLAT}\Release\libssh2.lib",
-        "output\${COMP}\${PLAT}\Release\libssh2.dll",
-        "output\${COMP}\${PLAT}\Release\libssh2.exp",
-    };
-     
-    build-command:@"
-        REM this makes it so that DLLs can have their own SxS Activation Context in an embedded resource.
-        echo %CL% | findstr ISOLATION_AWARE || set CL=%CL% -D ISOLATION_AWARE_ENABLED -I %cd%\output
-
-        echo ${PLAT}
-        if ""${PLAT}""==""x86"" (
-            echo start x86
-            msbuild /p:Platform=Win32 /p:Configuration=""DLL ${BuildCfg}"" win32\libssh2.sln
-        ) else (
-            echo start x64
-            msbuild /p:Platform=x64 /p:Configuration=""DLL ${BuildCfg}"" win32\libssh2.sln
-        )
-    ";
-     
-    clean-command:@"
-        cd win32
-        attrib -S -H -R *
-        del /Q *.sdf *.suo *.user 2>NUL
-        if exist ipch rmdir /S /Q ipch 2>NUL 
-        if exist x64 rmdir /S /Q x64 2>NUL 
-        cd ..
-    ";
+nuke {
+    .RemoveDir.Directories = @"$(MSBuildThisFileDirectory).\output";
 };

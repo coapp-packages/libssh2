@@ -1,71 +1,66 @@
-@import "version.inc";
-@import "libssh2.inc";
-@import "outercurve.inc";
+@import @"version.inc";
 
-#define { 
-    flavor: "${flav??vc10}"; 
-    arch : "${arc??x86}";
-}
-
-package {
-    name: "libssh2[${flavor}]";
-    display-name: "libssh2 - SSH2 Library";
-    arch: @"${arch}";
-}
-
-metadata {
-    summary: "libssh2 - SSH2 library";
-}
-
-files[dlls] {
-    root: @"..\output\${flavor}\${arch}\release";
-  
-    include: {
-        "libssh2.dll",
-    };
-    
-    trim-path: all;
+configurations {
 };
 
-files[files-to-sign] {
-    include: { 
-        dlls
-    };    
-}
+nuget {
+	// the nuspec file metadata. Gets created/updated on build
+	nuspec {
+		id = libssh2;
+		version : ${package-version};
+		title: libssh2 Library;
+		authors: {libssh2 team};
+		owners: {CoApp Project, Garrett Serack};
+		licenseUrl: "http://www.libssh2.org/license.html";
+		projectUrl: "http://github.com/coapp-packages/libssh2";
+		iconUrl: "http://www.libssh2.org/logo1-623.png";
+		requireLicenseAcceptance:false;
+		summary:libssh2 Library;
+		description: @"libssh2 is a client-side C library implementing the SSH2 protocol.
+	libssh2 homepage:  http://www.libssh2.org";
+		releaseNotes: "Release of libssh2 1.4.3 libraries.";
+		copyright: Copyright 2013;
+		tags: { libssh2, ssh, native, CoApp };
 
-requires {
-    package: "openssl[${flavor}]-1.0.0-${Package.Architecture}-1e373a58e25250cb";
-    package: "zlib[${flavor}]-1.2.5-${Package.Architecture}-1e373a58e25250cb";
-}
+	};
 
-manifest[things-that-need-them] {
-    assembly : {
-        "openssl[${flavor}]",
-        "zlib[${flavor}]",
-    };
+    dependencies {
+        packages : {
+            zlib/1.2.8.1;
+            openssl/1.0.1.21;
+        };
+    }
 
-    include : { 
-        dlls
-    };
-}
+	// the files that go into the content folders
+	// (inserted into the nuspec file)
+	files {
+		include: { ..\include\*.h };
 
-assembly[libssh2[${flavor}]] {
-    include : {
-        dlls
-    };
-}
-
-signing {
-    attributes : {
-        company="Outercurve Foundation",
-        description="${Package.PackageDetails.SummaryDescription}",
-        product-name="libssh2",
-        product-version="${package-version}",
-        file-version="${package-version}",
-    };
+		docs: { 
+            ..\docs\*,
+        };
     
-    replace-signature: true; 
-    include: { 
-        files-to-sign
-    };    
+		("v100,v110", "Win32,x64", "release,debug", "Dynamic", "cdecl") => {
+			[${0},${1},${2},${3},${4}] {
+				lib:     { .\output\${0}\${1}\${2}\${3}\${4}\lib\libssh2.lib };
+				bin:     { .\output\${0}\${1}\${2}\${3}\${4}\lib\libssh2.dll };
+				symbols: { .\output\${0}\${1}\${2}\${3}\${4}\lib\libssh2.pdb };
+			};
+		};
+		("v100,v110", "Win32,x64", "release,debug", "Static,ltcg", "cdecl") => {
+			[${0},${1},${2},${3},${4}] {
+				lib:     { .\output\${0}\${1}\${2}\${3}\${4}\lib\libssh2.lib };
+			};
+		};
+
+	};
+
+	// the VC++ .props file that gets generated and inserted into the ${d_content} folder
+	props { 
+	};
+
+	// the VC++ .targets file that gets generated and inserted into the ${d_content} folder
+	targets {
+	};
 }
+
