@@ -1,6 +1,4 @@
 /*
- * $Id: scp_nonblock.c,v 1.16 2009/04/28 10:35:30 bagder Exp $
- *
  * Sample showing how to do SCP transfers in a non-blocking manner.
  *
  * The sample code has default values for host name, user name, password
@@ -95,9 +93,6 @@ int main(int argc, char *argv[])
     int total = 0;
     long time_ms;
     int spin = 0;
-#if defined(HAVE_IOCTLSOCKET)
-    long flag = 1;
-#endif
     off_t got=0;
 
 #ifdef WIN32
@@ -154,7 +149,7 @@ int main(int argc, char *argv[])
     /* ... start it up. This will trade welcome banners, exchange keys,
      * and setup crypto, compression, and MAC layers
      */
-    while ((rc = libssh2_session_startup(session, sock)) ==
+    while ((rc = libssh2_session_handshake(session, sock)) ==
            LIBSSH2_ERROR_EAGAIN);
     if (rc) {
         fprintf(stderr, "Failure establishing SSH session: %d\n", rc);
@@ -255,7 +250,7 @@ int main(int argc, char *argv[])
     gettimeofday(&end, NULL);
 
     time_ms = tvdiff(end, start);
-    printf("Got %d bytes in %ld ms = %.1f bytes/sec spin: %d\n", total,
+    fprintf(stderr, "Got %d bytes in %ld ms = %.1f bytes/sec spin: %d\n", total,
            time_ms, total/(time_ms/1000.0), spin );
 
     libssh2_channel_free(channel);

@@ -46,6 +46,7 @@ libssh2_init(int flags)
 {
     if (_libssh2_initialized == 0 && !(flags & LIBSSH2_INIT_NO_CRYPTO)) {
         libssh2_crypto_init();
+        _libssh2_init_aes_ctr();
     }
 
     _libssh2_initialized++;
@@ -73,5 +74,5 @@ void
 _libssh2_init_if_needed(void)
 {
     if (_libssh2_initialized == 0)
-        libssh2_init (0);
+        (void)libssh2_init (0);
 }

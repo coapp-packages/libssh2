@@ -64,13 +64,13 @@ CFLAGS += -d_WIN32_WINNT=0x0501 -dENABLE_IPV6
 !ifdef %zlib_root
 ZLIB_ROOT = $(%zlib_root)
 !else
-ZLIB_ROOT = ..\..\zlib-1.2.5
+ZLIB_ROOT = ..\..\zlib-1.2.7
 !endif
 
 !ifdef %openssl_root
 OPENSSL_ROOT = $(%openssl_root)
 !else
-OPENSSL_ROOT = ..\..\openssl-0.9.8r
+OPENSSL_ROOT = ..\..\openssl-0.9.8y
 !endif
 
 #!ifdef %use_zlib
@@ -140,7 +140,7 @@ $(LIBNAME).lib: $(OBJS_STAT) $(LIB_ARG)
 
 .ERASE
 $(RESOURCE): libssh2.rc
-	$(RC) $(DEBUG) -q -r -zm -DLIBSSH2_VERSION_ONLY -I..\include $(SYS_INCL) $[@ -fo=$^@
+	$(RC) $(DEBUG) -q -r -zm -I..\include $(SYS_INCL) $[@ -fo=$^@
 
 .ERASE
 .c{$(OBJ_BASE)\dyn}.obj:

@@ -1,6 +1,4 @@
 /*
- * $Id: sftpdir_nonblock.c,v 1.13 2009/04/28 10:35:30 bagder Exp $
- *
  * Sample doing an SFTP directory listing.
  *
  * The sample code has default values for host name, user name, password and
@@ -28,12 +26,31 @@
 #ifdef HAVE_ARPA_INET_H
 # include <arpa/inet.h>
 #endif
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
 
 #include <sys/types.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
+
+/* last resort for systems not defining PRIu64 in inttypes.h */
+#ifndef __PRI64_PREFIX
+#ifdef WIN32
+#define __PRI64_PREFIX "I64"
+#else
+#if __WORDSIZE == 64
+#define __PRI64_PREFIX "l"
+#else
+#define __PRI64_PREFIX "ll"
+#endif /* __WORDSIZE */
+#endif /* WIN32 */
+#endif /* !__PRI64_PREFIX */
+#ifndef PRIu64
+#define PRIu64 __PRI64_PREFIX "u"
+#endif  /* PRIu64 */
 
 int main(int argc, char *argv[])
 {
@@ -46,9 +63,6 @@ int main(int argc, char *argv[])
     const char *password="password";
     const char *sftppath="/tmp/secretdir";
     int rc;
-#if defined(HAVE_IOCTLSOCKET)
-    long flag = 1;
-#endif
     LIBSSH2_SFTP *sftp_session;
     LIBSSH2_SFTP_HANDLE *sftp_handle;
 
@@ -107,7 +121,8 @@ int main(int argc, char *argv[])
     /* ... start it up. This will trade welcome banners, exchange keys,
      * and setup crypto, compression, and MAC layers
      */
-    while ((rc = libssh2_session_startup(session, sock)) == LIBSSH2_ERROR_EAGAIN);
+    while ((rc = libssh2_session_handshake(session, sock)) ==
+           LIBSSH2_ERROR_EAGAIN);
     if(rc) {
         fprintf(stderr, "Failure establishing SSH session: %d\n", rc);
         return -1;
@@ -119,11 +134,11 @@ int main(int argc, char *argv[])
      * user, that's your call
      */
     fingerprint = libssh2_hostkey_hash(session, LIBSSH2_HOSTKEY_HASH_SHA1);
-    printf("Fingerprint: ");
+    fprintf(stderr, "Fingerprint: ");
     for(i = 0; i < 20; i++) {
-        printf("%02X ", (unsigned char)fingerprint[i]);
+        fprintf(stderr, "%02X ", (unsigned char)fingerprint[i]);
     }
-    printf("\n");
+    fprintf(stderr, "\n");
 
     if (auth_pw) {
         /* We could authenticate via password */
@@ -197,13 +212,7 @@ int main(int argc, char *argv[])
             }
 
             if(attrs.flags & LIBSSH2_SFTP_ATTR_SIZE) {
-                /* attrs.filesize is an uint64_t according to
-                   the docs but there is no really good and
-                   portable 64bit type for C before C99, and
-                   correspondingly there was no good printf()
-                   option for it... */
-
-                printf("%8lld ", attrs.filesize);
+                printf("%8" PRIu64 " ", attrs.filesize);
             }
 
             printf("%s\n", mem);
@@ -230,7 +239,7 @@ int main(int argc, char *argv[])
 #else
     close(sock);
 #endif
-    printf("all done\n");
+    fprintf(stderr, "all done\n");
 
     libssh2_exit();
 

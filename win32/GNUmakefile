@@ -1,22 +1,20 @@
 #########################################################################
 #
 ## Makefile for building libssh2 (Win32 version - gnu make)
-## Use: make -f Makefile.mingw [help|all|clean|dev|devclean|dist|distclean|dll|objclean]
+## Use: make -f GNUmakefile [help|all|clean|dev|devclean|dist|distclean|dll|objclean]
 ##
-## Comments to: Guenter Knauf http://www.gknw.net/phpbb
+## Hacked by: Guenter Knauf
 #
 #########################################################################
 
 # Edit the path below to point to the base of your Zlib sources.
 ifndef ZLIB_PATH
-ZLIB_PATH = ../../zlib-1.2.5
+ZLIB_PATH = ../../zlib-1.2.7
 endif
-# since currently always enabled in libssh2_config.h set here too!
-WITH_ZLIB = 1
 
 # Edit the path below to point to the base of your OpenSSL package.
 ifndef OPENSSL_PATH
-OPENSSL_PATH = ../../openssl-0.9.8r
+OPENSSL_PATH = ../../openssl-0.9.8y
 endif
 
 # Edit the var below to set to your architecture or set environment var.
@@ -38,8 +36,6 @@ DEVLARC	= $(DEVLDIR).zip
 
 # Edit the vars below to change target settings.
 TARGET	= libssh2
-VERSION	= $(LIBSSH2_VERSION)
-COPYR   = (c) $(LIBSSH2_COPYRIGHT_STR)
 WWWURL	= http://www.libssh2.org/
 DESCR	= libssh2 $(LIBSSH2_VERSION_STR)
 #STACK	= 64000
@@ -59,28 +55,38 @@ else
 	OBJDIR	= debug
 endif
 
-# Include the version info retrieved from libssh2.h
--include $(OBJDIR)/version.inc
-
-ifeq ($(findstring /sh,$(SHELL)),/sh)
-CP	= cp -afv
-# RM	= rm -f
-MD	= mkdir
-RD	= rm -fr
-DL	= '
-DS	= /
-else
-CP	= copy
-RM	= del /q /f 2>NUL
-MD	= md
-RD	= rd /q /s 2>NUL
-XX	=
-DS	= $(XX)\$(XX)
-endif
 # Here you can find a native Win32 binary of the original awk:
 # http://www.gknw.net/development/prgtools/awk-20100523.zip
 AWK	= awk
 ZIP	= zip -qzr9
+
+# Platform-dependent helper tool macros
+ifeq ($(findstring /sh,$(SHELL)),/sh)
+DEL	= rm -f $1
+RMDIR	= rm -fr $1
+MKDIR	= mkdir -p $1
+COPY	= -cp -afv $1 $2
+#COPYR	= -cp -afr $1/* $2
+COPYR	= -rsync -aC $1/* $2
+TOUCH	= touch $1
+CAT	= cat
+ECHONL	= echo ""
+DL	= '
+else
+ifeq "$(OS)" "Windows_NT"
+DEL	= -del 2>NUL /q /f $(subst /,\,$1)
+RMDIR	= -rd 2>NUL /q /s $(subst /,\,$1)
+else
+DEL	= -del 2>NUL $(subst /,\,$1)
+RMDIR	= -deltree 2>NUL /y $(subst /,\,$1)
+endif
+MKDIR	= -md 2>NUL $(subst /,\,$1)
+COPY	= -copy 2>NUL /y $(subst /,\,$1) $(subst /,\,$2)
+COPYR	= -xcopy 2>NUL /q /y /e $(subst /,\,$1) $(subst /,\,$2)
+TOUCH	= copy 2>&1>NUL /b $(subst /,\,$1) +,,
+CAT	= type
+ECHONL	= $(ComSpec) /c echo.
+endif
 
 # The following line defines your compiler.
 ifdef METROWERKS
@@ -89,8 +95,11 @@ else
 	CC = $(CROSSPREFIX)gcc
 endif
 
+# Include the version info retrieved from libssh2.h
+-include $(OBJDIR)/version.inc
+
 # Global flags for all compilers
-CFLAGS	= $(OPT) -D$(DB) -DWIN32 -DLIBSSH2_WIN32 # -DHAVE_CONFIG_H
+CFLAGS	= $(OPT) -D$(DB) -DLIBSSH2_WIN32 # -DHAVE_CONFIG_H
 ifeq ($(ARCH),w64)
 CFLAGS	+= -D_AMD64_
 endif
@@ -113,30 +122,57 @@ CFLAGS	+= -w on,nounused,nounusedexpr # -ansi strict
 else
 LD	= $(CROSSPREFIX)gcc
 RC	= $(CROSSPREFIX)windres
-LDFLAGS	= -s -shared -Wl,--out-implib,$(TARGET)dll.a
+LDFLAGS	= -s -shared -Wl,--output-def,$(TARGET).def,--out-implib,$(TARGET)dll.a
 AR	= $(CROSSPREFIX)ar
 ARFLAGS	= -cq
 LIBEXT	= a
 RANLIB	= $(CROSSPREFIX)ranlib
 #LDLIBS	+= -lwsock32
 LDLIBS	+= -lws2_32
-RCFLAGS	= -DLIBSSH2_VERSION_ONLY -I. -I ../include -O coff -i
+RCFLAGS	= -I. -I ../include -O coff -i
 CFLAGS	+= -fno-strict-aliasing
 CFLAGS	+= -Wall # -pedantic
 endif
 
 INCLUDES = -I. -I../include
-INCLUDES += -I$(OPENSSL_PATH)/outinc -I$(OPENSSL_PATH)/outinc/openssl
 
-ifdef LINK_STATIC
-LDLIBS += $(OPENSSL_PATH)/out/libcrypto.$(LIBEXT) $(OPENSSL_PATH)/out/libssl.$(LIBEXT)
+ifndef OPENSSL_INCLUDE
+	ifeq "$(wildcard $(OPENSSL_PATH)/outinc)" "$(OPENSSL_PATH)/outinc"
+		OPENSSL_INCLUDE = $(OPENSSL_PATH)/outinc
+	endif
+	ifeq "$(wildcard $(OPENSSL_PATH)/include)" "$(OPENSSL_PATH)/include"
+		OPENSSL_INCLUDE = $(OPENSSL_PATH)/include
+	endif
+endif
+ifneq "$(wildcard $(OPENSSL_INCLUDE)/openssl/opensslv.h)" "$(OPENSSL_INCLUDE)/openssl/opensslv.h"
+$(error Invalid OPENSSL_PATH: $(OPENSSL_PATH))
+endif
+INCLUDES += -I"$(OPENSSL_INCLUDE)"
+ifndef OPENSSL_LIBPATH
+	OPENSSL_LIBS_STAT = crypto ssl
+	ifeq "$(wildcard $(OPENSSL_PATH)/out)" "$(OPENSSL_PATH)/out"
+		OPENSSL_LIBPATH = $(OPENSSL_PATH)/out
+		OPENSSL_LIBS_DYN = eay32 ssl32
+	endif
+	ifeq "$(wildcard $(OPENSSL_PATH)/lib)" "$(OPENSSL_PATH)/lib"
+		OPENSSL_LIBPATH = $(OPENSSL_PATH)/lib
+		OPENSSL_LIBS_DYN = crypto.dll ssl.dll
+	endif
+endif
+ifdef LINK_OPENSSL_STATIC
+	LDLIBS += $(patsubst %,$(OPENSSL_LIBPATH)/lib%.$(LIBEXT), $(OPENSSL_LIBS_STAT)) -lgdi32
 else
-LDLIBS += $(OPENSSL_PATH)/out/libeay32.$(LIBEXT) $(OPENSSL_PATH)/out/libssl32.$(LIBEXT)
+	LDLIBS += $(patsubst %,$(OPENSSL_LIBPATH)/lib%.$(LIBEXT), $(OPENSSL_LIBS_DYN))
 endif
 
 ifdef WITH_ZLIB
+	CFLAGS += -DLIBSSH2_HAVE_ZLIB
 	INCLUDES += -I$(ZLIB_PATH)
-	LDLIBS += $(ZLIB_PATH)/libz.$(LIBEXT)
+	ifdef LINK_ZLIB_STATIC
+		LDLIBS += $(ZLIB_PATH)/libz.$(LIBEXT)
+	else
+		LDLIBS += $(ZLIB_PATH)/libz.dll.$(LIBEXT)
+	endif
 endif
 
 CFLAGS	+= $(INCLUDES)
@@ -160,70 +196,74 @@ prebuild: $(OBJDIR) $(OBJDIR)/version.inc
 # libssh2_config.h
 
 test: all
-	$(MAKE) -C test -f Makefile.mingw
+	$(MAKE) -C test -f GNUmakefile
  
 $(OBJDIR)/%.o: %.c
 #	@echo Compiling $<
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(OBJDIR)/version.inc: ../include/libssh2.h $(OBJDIR)
+$(OBJDIR)/version.inc: ../get_ver.awk ../include/libssh2.h $(OBJDIR)
 	@echo Creating $@
-	@$(AWK) -f ../get_ver.awk $< > $@
+	@$(AWK) -f $^ > $@
 
 dist: all $(DISTDIR) $(DISTDIR)/readme.txt
-	@-$(MD) $(DISTDIR)$(DS)bin
-	@-$(CP) ..$(DS)INSTALL $(DISTDIR)
-	@-$(CP) ..$(DS)LICENSE $(DISTDIR)
-	@-$(CP) ..$(DS)README $(DISTDIR)
-	@$(CP) $(TARGET).dll $(DISTDIR)$(DS)bin
+	@$(call MKDIR, $(DISTDIR)/bin)
+	@$(call COPY, ../AUTHORS, $(DISTDIR))
+	@$(call COPY, ../COPYING, $(DISTDIR))
+	@$(call COPY, ../INSTALL, $(DISTDIR))
+	@$(call COPY, ../README, $(DISTDIR))
+	@$(call COPY, ../RELEASE-NOTES, $(DISTDIR))
+	@$(call COPY, $(TARGET).dll, $(DISTDIR)/bin)
 	@echo Creating $(DISTARC)
 	@$(ZIP) $(DISTARC) $(DISTDIR)/* < $(DISTDIR)/readme.txt
 
 dev: all $(DEVLDIR) $(DEVLDIR)/readme.txt
-	@-$(MD) $(DEVLDIR)$(DS)bin
-	@-$(MD)$(DEVLDIR)$(DS)include
-	@-$(MD) $(DEVLDIR)$(DS)win32
-	@-$(CP) ..$(DS)INSTALL $(DEVLDIR)
-	@-$(CP) ..$(DS)LICENSE $(DEVLDIR)
-	@-$(CP) ..$(DS)README $(DEVLDIR)
-	@$(CP) $(TARGET).dll $(DEVLDIR)$(DS)bin
-	@$(CP) ..$(DS)include$(DS)*.h $(DEVLDIR)$(DS)include
-	@$(CP) libssh2_config.h $(DEVLDIR)/include
-	@$(CP) *.$(LIBEXT) $(DEVLDIR)/win32
+	@$(call MKDIR, $(DEVLDIR)/bin)
+	@$(call MKDIR, $(DEVLDIR)/include)
+	@$(call MKDIR, $(DEVLDIR)/win32)
+	@$(call COPY, ../AUTHORS, $(DEVLDIR))
+	@$(call COPY, ../COPYING, $(DEVLDIR))
+	@$(call COPY, ../INSTALL, $(DEVLDIR))
+	@$(call COPY, ../README, $(DEVLDIR))
+	@$(call COPY, ../RELEASE-NOTES, $(DEVLDIR))
+	@$(call COPY, $(TARGET).dll, $(DEVLDIR)/bin)
+	@$(call COPY, ../include/*.h, $(DEVLDIR)/include)
+	@$(call COPY, libssh2_config.h, $(DEVLDIR)/include)
+	@$(call COPY, *.$(LIBEXT), $(DEVLDIR)/win32)
 	@echo Creating $(DEVLARC)
 	@$(ZIP) $(DEVLARC) $(DEVLDIR)/* < $(DEVLDIR)/readme.txt
 
 distclean: clean
-	-$(RD) $(DISTDIR)
-	-$(RM) $(DISTARC)
+	$(call RMDIR, $(DISTDIR))
+	$(call DEL, $(DISTARC))
 
 devclean: clean
-	-$(RD) $(DEVLDIR)
-	-$(RM) $(DEVLARC)
+	$(call RMDIR, $(DEVLDIR))
+	$(call DEL, $(DEVLARC))
 
 objclean: all
-	-$(RD) $(OBJDIR)
+	$(call RMDIR, $(OBJDIR))
 
 testclean: clean
-	$(MAKE) -C test -f Makefile.win32 clean
+	$(MAKE) -C test -f GNUmakefile clean
 
 clean:
-#	-$(RM) libssh2_config.h
-	-$(RM) $(TARGET).dll $(TARGET).$(LIBEXT) $(TARGET)dll.$(LIBEXT)
-	-$(RD) $(OBJDIR)
+#	$(call DEL, libssh2_config.h)
+	$(call DEL, $(TARGET).dll $(TARGET).def $(TARGET).$(LIBEXT) $(TARGET)dll.$(LIBEXT))
+	$(call RMDIR, $(OBJDIR))
 
 $(OBJDIR):
-	@$(MD) $@
+	@$(call MKDIR, $@)
 
 $(DISTDIR):
-	@$(MD) $@
+	@$(call MKDIR, $@)
 
 $(DEVLDIR):
-	@$(MD) $@
+	@$(call MKDIR, $@)
 
 $(TARGET).$(LIBEXT): $(OBJS)
 	@echo Creating $@
-	@-$(RM) $@
+	@$(call DEL, $@)
 	@$(AR) $(ARFLAGS) $@ $^
 ifdef RANLIB
 	@$(RANLIB) $@
@@ -231,7 +271,7 @@ endif
 
 $(TARGET).dll $(TARGET)dll.a: $(OBJL)
 	@echo Linking $@
-	@-$(RM) $@
+	@$(call DEL, $@)
 	@$(LD) $(LDFLAGS) $^ -o $@ $(LIBPATH) $(LDLIBS)
 
 
@@ -240,7 +280,7 @@ $(OBJDIR)/%.res: %.rc
 	@$(RC) $(RCFLAGS) $< -o $@
 
 
-$(DISTDIR)/readme.txt: Makefile.win32
+$(DISTDIR)/readme.txt: GNUmakefile
 	@echo Creating $@
 	@echo $(DL)This is a binary distribution for Win32 platform.$(DL) > $@
 	@echo $(DL)libssh version $(LIBSSH2_VERSION_STR)$(DL) >> $@
@@ -248,7 +288,7 @@ $(DISTDIR)/readme.txt: Makefile.win32
 	@echo $(DL)any further documentation:$(DL) >> $@
 	@echo $(DL)$(WWWURL)$(DL) >> $@
 
-$(DEVLDIR)/readme.txt: Makefile.win32
+$(DEVLDIR)/readme.txt: GNUmakefile
 	@echo Creating $@
 	@echo $(DL)This is a development distribution for Win32 platform.$(DL) > $@
 	@echo $(DL)libssh version $(LIBSSH2_VERSION_STR)$(DL) >> $@

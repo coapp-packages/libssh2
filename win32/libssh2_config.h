@@ -15,6 +15,7 @@
 #define HAVE_UNISTD_H
 #define HAVE_INTTYPES_H
 #define HAVE_SYS_TIME_H
+#define HAVE_GETTIMEOFDAY
 #endif
 
 #define HAVE_WINSOCK2_H
@@ -33,9 +34,6 @@
 #define strncasecmp strnicmp
 #define strcasecmp stricmp
 #endif /* _MSC_VER */
-
-/* Compile in zlib support */
-#define LIBSSH2_HAVE_ZLIB 1
 
 /* Enable newer diffie-hellman-group-exchange-sha1 syntax */
 #define LIBSSH2_DH_GEX_NEW 1

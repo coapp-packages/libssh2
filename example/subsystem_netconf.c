@@ -61,8 +61,9 @@ static int netconf_write(LIBSSH2_CHANNEL *channel, const char *buf, size_t len)
 static int netconf_read_until(LIBSSH2_CHANNEL *channel, const char *endtag,
                               char *buf, size_t buflen)
 {
-    ssize_t len, rd = 0;
-    char *endreply, *specialsequence = NULL;
+    ssize_t len;
+    size_t rd = 0;
+    char *endreply = NULL, *specialsequence = NULL;
 
     memset(buf, 0, buflen);
 
@@ -71,7 +72,7 @@ static int netconf_read_until(LIBSSH2_CHANNEL *channel, const char *endtag,
         if (LIBSSH2_ERROR_EAGAIN == len)
             continue;
         else if (len < 0) {
-            fprintf(stderr, "libssh2_channel_read: %d", (int)len);
+            fprintf(stderr, "libssh2_channel_read: %d\n", (int)len);
             return -1;
         }
         rd += len;
@@ -85,7 +86,12 @@ static int netconf_read_until(LIBSSH2_CHANNEL *channel, const char *endtag,
         if (endreply)
             specialsequence = strstr(endreply, "]]>]]>");
 
-    } while (!endreply || !specialsequence);
+    } while (!specialsequence && rd < buflen);
+
+    if (!specialsequence) {
+        fprintf(stderr, "%s: ]]>]]> not found! read buffer too small?\n", __func__);
+        return -1;
+    }
 
     /* discard the special sequence so that only XML is returned */
     rd = specialsequence - buf;
@@ -148,7 +154,7 @@ int main(int argc, char *argv[])
     /* ... start it up. This will trade welcome banners, exchange keys,
      * and setup crypto, compression, and MAC layers
      */
-    rc = libssh2_session_startup(session, sock);
+    rc = libssh2_session_handshake(session, sock);
     if(rc) {
         fprintf(stderr, "Error when starting up SSH session: %d\n", rc);
         return -1;
@@ -167,7 +173,7 @@ int main(int argc, char *argv[])
 
     /* check what authentication methods are available */
     userauthlist = libssh2_userauth_list(session, username, strlen(username));
-    printf("Authentication methods: %s\n", userauthlist);
+    fprintf(stderr, "Authentication methods: %s\n", userauthlist);
     if (strstr(userauthlist, "password"))
         auth |= AUTH_PASSWORD;
     if (strstr(userauthlist, "publickey"))
@@ -189,12 +195,12 @@ int main(int argc, char *argv[])
     } else if (auth & AUTH_PUBLICKEY) {
         if (libssh2_userauth_publickey_fromfile(session, username, keyfile1,
                                                 keyfile2, password)) {
-            printf("Authentication by public key failed!\n");
+            fprintf(stderr, "Authentication by public key failed!\n");
             goto shutdown;
         }
-        printf("Authentication by public key succeeded.\n");
+        fprintf(stderr, "Authentication by public key succeeded.\n");
     } else {
-        printf("No supported authentication methods found!\n");
+        fprintf(stderr, "No supported authentication methods found!\n");
         goto shutdown;
     }
 
@@ -217,7 +223,7 @@ int main(int argc, char *argv[])
 
     /* NETCONF: http://tools.ietf.org/html/draft-ietf-netconf-ssh-06 */
 
-    printf("Sending NETCONF client <hello>\n");
+    fprintf(stderr, "Sending NETCONF client <hello>\n");
     snprintf(buf, sizeof(buf),
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
       "<hello>"
@@ -225,33 +231,33 @@ int main(int argc, char *argv[])
       "<capability>urn:ietf:params:xml:ns:netconf:base:1.0</capability>"
       "</capabilities>"
       "</hello>\n"
-      "]]>]]>\n%n", &len);
+      "]]>]]>\n%n", (int *)&len);
     if (-1 == netconf_write(channel, buf, len))
         goto shutdown;
 
-    printf("Reading NETCONF server <hello>\n");
+    fprintf(stderr, "Reading NETCONF server <hello>\n");
     len = netconf_read_until(channel, "</hello>", buf, sizeof(buf));
     if (-1 == len)
         goto shutdown;
 
-    printf("Got %d bytes:\n----------------------\n%s", len, buf);
+    fprintf(stderr, "Got %d bytes:\n----------------------\n%s", (int)len, buf);
 
-    printf("Sending NETCONF <rpc>\n");
+    fprintf(stderr, "Sending NETCONF <rpc>\n");
     snprintf(buf, sizeof(buf),
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
       "<rpc xmlns=\"urn:ietf:params:xml:ns:netconf:base:1.0\">"
       "<get-interface-information><terse/></get-interface-information>"
       "</rpc>\n"
-      "]]>]]>\n%n", &len);
+      "]]>]]>\n%n", (int *)&len);
     if (-1 == netconf_write(channel, buf, len))
         goto shutdown;
 
-    printf("Reading NETCONF <rpc-reply>\n");
+    fprintf(stderr, "Reading NETCONF <rpc-reply>\n");
     len = netconf_read_until(channel, "</rpc-reply>", buf, sizeof(buf));
     if (-1 == len)
         goto shutdown;
 
-    printf("Got %d bytes:\n----------------------\n%s", len, buf);
+    fprintf(stderr, "Got %d bytes:\n----------------------\n%s", (int)len, buf);
 
 shutdown:
     if (channel)

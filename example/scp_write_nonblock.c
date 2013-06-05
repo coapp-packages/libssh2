@@ -1,7 +1,5 @@
 /*
- * $Id: scp_write_nonblock.c,v 1.10 2009/04/28 10:35:30 bagder Exp $
- *
- * Sample showing how to do a simple SCP transfer.
+ * Sample showing how to do an SCP non-blocking upload transfer.
  */
 
 #include "libssh2_config.h"
@@ -16,6 +14,9 @@
 #endif
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+# include <sys/select.h>
 #endif
 # ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -78,9 +79,6 @@ int main(int argc, char *argv[])
     const char *scppath="/tmp/TEST";
     FILE *local;
     int rc;
-#if defined(HAVE_IOCTLSOCKET)
-    long flag = 1;
-#endif
     char mem[1024*100];
     size_t nread;
     char *ptr;
@@ -155,7 +153,7 @@ int main(int argc, char *argv[])
     /* ... start it up. This will trade welcome banners, exchange keys,
      * and setup crypto, compression, and MAC layers
      */
-    while ((rc = libssh2_session_startup(session, sock))
+    while ((rc = libssh2_session_handshake(session, sock))
            == LIBSSH2_ERROR_EAGAIN);
     if(rc) {
         fprintf(stderr, "Failure establishing SSH session: %d\n", rc);
@@ -245,7 +243,7 @@ int main(int argc, char *argv[])
 
     duration = (int)(time(NULL)-start);
 
-    printf("%ld bytes in %d seconds makes %.1f bytes/sec\n",
+    fprintf(stderr, "%ld bytes in %d seconds makes %.1f bytes/sec\n",
            total, duration, total/(double)duration);
 
     fprintf(stderr, "Sending EOF\n");

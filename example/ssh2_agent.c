@@ -94,14 +94,26 @@ int main(int argc, char *argv[])
      * banners, exchange keys, and setup crypto, compression, and MAC layers
      */
     session = libssh2_session_init();
-    if (libssh2_session_startup(session, sock)) {
+    if (libssh2_session_handshake(session, sock)) {
         fprintf(stderr, "Failure establishing SSH session\n");
         return 1;
     }
 
+    /* At this point we havn't authenticated. The first thing to do is check
+     * the hostkey's fingerprint against our known hosts Your app may have it
+     * hard coded, may go to a file, may present it to the user, that's your
+     * call
+     */
+    fingerprint = libssh2_hostkey_hash(session, LIBSSH2_HOSTKEY_HASH_SHA1);
+    fprintf(stderr, "Fingerprint: ");
+    for(i = 0; i < 20; i++) {
+        fprintf(stderr, "%02X ", (unsigned char)fingerprint[i]);
+    }
+    fprintf(stderr, "\n");
+
     /* check what authentication methods are available */
     userauthlist = libssh2_userauth_list(session, username, strlen(username));
-    printf("Authentication methods: %s\n", userauthlist);
+    fprintf(stderr, "Authentication methods: %s\n", userauthlist);
     if (strstr(userauthlist, "publickey") == NULL) {
         fprintf(stderr, "\"publickey\" authentication is not supported\n");
         goto shutdown;
@@ -135,11 +147,11 @@ int main(int argc, char *argv[])
             goto shutdown;
         }
         if (libssh2_agent_userauth(agent, username, identity)) {
-            printf("\tAuthentication with username %s and "
+            fprintf(stderr, "\tAuthentication with username %s and "
                    "public key %s failed!\n",
                    username, identity->comment);
         } else {
-            printf("\tAuthentication with username %s and "
+            fprintf(stderr, "\tAuthentication with username %s and "
                    "public key %s succeeded!\n",
                    username, identity->comment);
             break;
@@ -151,17 +163,7 @@ int main(int argc, char *argv[])
         goto shutdown;
     }
 
-    /* At this point we havn't authenticated. The first thing to do is check
-     * the hostkey's fingerprint against our known hosts Your app may have it
-     * hard coded, may go to a file, may present it to the user, that's your
-     * call
-     */
-    fingerprint = libssh2_hostkey_hash(session, LIBSSH2_HOSTKEY_HASH_SHA1);
-    printf("Fingerprint: ");
-    for(i = 0; i < 20; i++) {
-        printf("%02X ", (unsigned char)fingerprint[i]);
-    }
-    printf("\n");
+    /* We're authenticated now. */
 
     /* Request a shell */
     if (!(channel = libssh2_channel_open_session(session))) {
@@ -232,7 +234,7 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    printf("all done!\n");
+    fprintf(stderr, "all done!\n");
 
     libssh2_exit();
 

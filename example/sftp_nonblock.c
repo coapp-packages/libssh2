@@ -1,6 +1,4 @@
 /*
- * $Id: sftp_nonblock.c,v 1.18 2009/04/28 10:35:30 bagder Exp $
- *
  * Sample showing how to do SFTP non-blocking transfers.
  *
  * The sample code has default values for host name, user name, password
@@ -94,9 +92,6 @@ int main(int argc, char *argv[])
     int total = 0;
     long time_ms;
     int spin = 0;
-#if defined(HAVE_IOCTLSOCKET)
-    long flag = 1;
-#endif
     LIBSSH2_SFTP *sftp_session;
     LIBSSH2_SFTP_HANDLE *sftp_handle;
 
@@ -156,7 +151,7 @@ int main(int argc, char *argv[])
     /* ... start it up. This will trade welcome banners, exchange keys,
         * and setup crypto, compression, and MAC layers
         */
-    while ((rc = libssh2_session_startup(session, sock)) ==
+    while ((rc = libssh2_session_handshake(session, sock)) ==
            LIBSSH2_ERROR_EAGAIN);
     if (rc) {
         fprintf(stderr, "Failure establishing SSH session: %d\n", rc);
@@ -256,7 +251,7 @@ int main(int argc, char *argv[])
 
     gettimeofday(&end, NULL);
     time_ms = tvdiff(end, start);
-    printf("Got %d bytes in %ld ms = %.1f bytes/sec spin: %d\n", total,
+    fprintf(stderr, "Got %d bytes in %ld ms = %.1f bytes/sec spin: %d\n", total,
            time_ms, total/(time_ms/1000.0), spin );
 
     libssh2_sftp_close(sftp_handle);
@@ -264,7 +259,7 @@ int main(int argc, char *argv[])
 
 shutdown:
 
-    printf("libssh2_session_disconnect\n");
+    fprintf(stderr, "libssh2_session_disconnect\n");
     while (libssh2_session_disconnect(session,
                                       "Normal Shutdown, Thank you") ==
            LIBSSH2_ERROR_EAGAIN);

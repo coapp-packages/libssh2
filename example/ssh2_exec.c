@@ -1,6 +1,4 @@
 /*
- * $Id: ssh2_exec.c,v 1.4 2009/05/07 20:30:22 bagder Exp $
- *
  * Sample showing how to use libssh2 to execute a command remotely.
  *
  * The sample code has fixed values for host name, user name, password
@@ -144,7 +142,7 @@ int main(int argc, char *argv[])
     /* ... start it up. This will trade welcome banners, exchange keys,
      * and setup crypto, compression, and MAC layers
      */
-    while ((rc = libssh2_session_startup(session, sock)) ==
+    while ((rc = libssh2_session_handshake(session, sock)) ==
            LIBSSH2_ERROR_EAGAIN);
     if (rc) {
         fprintf(stderr, "Failure establishing SSH session: %d\n", rc);
@@ -266,7 +264,9 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "\n");
             }
             else {
-                fprintf(stderr, "libssh2_channel_read returned %d\n", rc);
+                if( rc != LIBSSH2_ERROR_EAGAIN )
+                    /* no need to output this for the EAGAIN case */
+                    fprintf(stderr, "libssh2_channel_read returned %d\n", rc);
             }
         }
         while( rc > 0 );
@@ -292,9 +292,9 @@ int main(int argc, char *argv[])
     }
 
     if (exitsignal)
-        printf("\nGot signal: %s\n", exitsignal);
+        fprintf(stderr, "\nGot signal: %s\n", exitsignal);
     else 
-        printf("\nEXIT: %d bytecount: %d\n", exitcode, bytecount);
+        fprintf(stderr, "\nEXIT: %d bytecount: %d\n", exitcode, bytecount);
 
     libssh2_channel_free(channel);
     channel = NULL;
