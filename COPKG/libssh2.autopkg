@@ -26,8 +26,8 @@ nuget {
 
     dependencies {
         packages : {
-            zlib/1.2.8.1;
-            openssl/1.0.1.21;
+            zlib/1.2;
+            openssl/1.0;
         };
     }
 
